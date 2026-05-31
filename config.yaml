@@ -1,0 +1,7 @@
+providers:
+  openai:
+    api_key: ${OPENAI_API_KEY}
+    base_url: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+  bailian:
+    api_key: ${BAILIAN_API_KEY}
+    base_url: ${BAILIAN_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
