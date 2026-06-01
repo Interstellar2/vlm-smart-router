@@ -29,7 +29,7 @@ _BAILIAN_COMMON_KWARGS = {
 
 
 def _with_thinking():
-    return {"model_kwargs": {"extra_body": {"enable_thinking": False}}}
+    return {"extra_body": {"enable_thinking": False}}
 
 
 PROVIDERS: dict[ModelType, ChatOpenAI] = {
