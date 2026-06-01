@@ -13,7 +13,7 @@ import numpy as np
 import httpx
 
 from complexity.analyzer import ImageComplexityProfile, analyze_bgr_complexity, merge_profiles
-from config import routing_config, TierName
+from core.settings import routing_config, TierName
 
 logger = logging.getLogger(__name__)
 

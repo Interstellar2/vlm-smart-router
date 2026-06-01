@@ -14,9 +14,10 @@ import pytest
 
 from complexity.analyzer import analyze_bgr_complexity, merge_profiles, ImageComplexityProfile
 from core.llm.config import load_config
-from fallback.errors import classify_invoke_error
-from fallback.session import FallbackSession, fallback_config
-from router.vlm_router import VlmAgentRouter
+from services.errors import classify_invoke_error
+from services.execution import FallbackSession
+from core.settings import fallback_config
+from services.routing import VlmAgentRouter
 
 
 # ---------- Mock ChatModel for monkeypatching ----------
@@ -89,7 +90,7 @@ class FakeLLMFactory:
 @pytest.fixture
 def fake_factory(monkeypatch):
     factory = FakeLLMFactory()
-    monkeypatch.setattr("fallback.session.llm_factory", factory)
+    monkeypatch.setattr("services.execution.llm_factory", factory)
     return factory
 
 
@@ -249,7 +250,7 @@ async def test_quality_escalate(fake_factory):
     model = fake_factory.get_model("bailian-qwen-vl-turbo")
     model.set_force_bad_json(True)
 
-    from router.vlm_router import RoutingDecision
+    from services.routing import RoutingDecision
 
     router = VlmAgentRouter()
     routing = RoutingDecision(

@@ -15,37 +15,42 @@
 
 ```
 vlm_demo/
-├── main.py                     # FastAPI 入口
-├── config.py                   # 路由与降级链配置
+├── api/                        # API 层（请求入口 + Pydantic Schema）
+│   ├── main.py                 # FastAPI 入口
+│   └── schemas.py              # Pydantic 数据模型
+│
+├── services/                   # 业务编排层（路由决策 + 降级兜底）
+│   ├── routing.py              # VLM 图片复杂度路由
+│   ├── execution.py            # Fallback 降级会话 + 质量升档封装
+│   └── errors.py               # 错误分类
+│
+├── core/                       # 基础设施层
+│   ├── settings.py             # 路由与降级链配置
+│   └── llm/                    # LLM 基础设施
+│       ├── config.py           # YAML + ${ENV} 配置加载器
+│       ├── model_type.py       # ModelType 枚举
+│       ├── factory.py          # LLMFactory 模型工厂
+│       └── providers/
+│           ├── openai.py       # OpenAI Provider
+│           └── bailian.py      # 百炼 Provider
+│
+├── complexity/                 # CV 分析领域逻辑
+│   └── analyzer.py             # 图片复杂度分析
+│
+├── mocks/                      # 测试/演示辅助
+│   └── mock_llm.py             # Mock 模型（单元测试用）
+│
+├── utils/                      # 通用工具
+│   └── image_utils.py          # 图片 URL 转换工具
+│
+├── tests/
+│   └── test_demo.py            # 单元测试
+│
 ├── config.yaml                 # LLM Provider 配置（API Key / Base URL）
-├── schemas.py                  # Pydantic 数据模型
 ├── Dockerfile                  # Docker 构建文件
 ├── docker-compose.yml          # Docker Compose 编排
 ├── requirements.txt            # Python 依赖
-├── .env.example                # 环境变量模板
-│
-├── core/llm/                   # LLM 基础设施（参考 multi_agent_example 架构）
-│   ├── config.py               # YAML + ${ENV} 配置加载器
-│   ├── model_type.py           # ModelType 枚举
-│   ├── factory.py              # LLMFactory 模型工厂
-│   └── providers/
-│       ├── openai.py           # OpenAI Provider
-│       └── bailian.py          # 百炼 Provider
-│
-├── router/
-│   └── vlm_router.py           # VLM 图片复杂度路由
-├── complexity/
-│   └── analyzer.py             # CV 复杂度分析
-├── fallback/
-│   ├── session.py              # Fallback 降级会话
-│   ├── escalation.py           # 质量升档封装
-│   └── errors.py               # 错误分类
-├── utils/
-│   └── image_utils.py          # 图片 URL 转换工具
-├── models/
-│   └── mock_llm.py             # Mock 模型（单元测试用）
-└── tests/
-    └── test_demo.py            # 单元测试
+└── README.md                   # 本文档
 ```
 
 ---
@@ -68,11 +73,7 @@ pip install -r requirements.txt
 
 ### 2. 配置环境变量
 
-```bash
-cp .env.example .env
-```
-
-编辑 `.env`，填入你的真实 API Key：
+编辑环境变量，填入你的真实 API Key：
 
 ```env
 # OpenAI
@@ -91,9 +92,9 @@ BAILIAN_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
 **本地开发：**
 
 ```bash
-python main.py
+python api/main.py
 # 或
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 **Docker 部署：**
@@ -184,7 +185,7 @@ POST /evaluate
 
 ## 配置说明
 
-### 路由配置（`config.py`）
+### 路由配置（`core/settings.py`）
 
 ```python
 @dataclass
@@ -198,7 +199,7 @@ class AgentRoutingProfile:
     quality_escalate: bool = True  # 是否开启质量升档
 ```
 
-### 降级链配置（`config.py`）
+### 降级链配置（`core/settings.py`）
 
 ```python
 DEFAULT_FALLBACK_CHAINS = {
@@ -261,7 +262,7 @@ pip install -r requirements.txt
 # 2. 配置环境变量（.env 或系统环境变量）
 
 # 3. 启动（生产环境建议用 gunicorn + uvicorn worker）
-gunicorn main:app -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 -w 2
+gunicorn api.main:app -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 -w 2
 ```
 
 ---

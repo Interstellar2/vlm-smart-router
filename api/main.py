@@ -9,10 +9,10 @@ import uvicorn
 from fastapi import FastAPI, HTTPException
 
 from complexity.analyzer import ImageComplexityProfile
-from config import routing_config, fallback_config
-from fallback.escalation import run_with_quality_escalate
-from router.vlm_router import RoutingDecision, VlmAgentRouter
-from schemas import EvaluateRequest, EvaluateResponse
+from core.settings import routing_config, fallback_config
+from services.execution import run_with_quality_escalate
+from services.routing import RoutingDecision, VlmAgentRouter
+from api.schemas import EvaluateRequest, EvaluateResponse
 from utils.image_utils import convert_image_urls_to_vision_urls
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -129,4 +129,4 @@ async def get_config():
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("api.main:app", host="0.0.0.0", port=8000, reload=True)
