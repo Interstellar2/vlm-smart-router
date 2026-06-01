@@ -159,17 +159,17 @@ POST /evaluate
   "agent_id": "generic",
   "routing": {
     "agent_id": "generic",
-    "model_type": "bailian-qwen-vl-plus",
+    "model_type": "qwen3.5-plus",
     "tier": "mid",
     "composite_score": 0.52,
     "shadow_mode": false,
     "profiles": { ... }
   },
   "complexity": { ... },
-  "result": { "model": "bailian-qwen-vl-plus", "score": 0.95, ... },
+  "result": { "model": "qwen3.5-plus", "score": 0.95, ... },
   "meta": {
-    "requested_model": "bailian-qwen-vl-plus",
-    "actual_model": "bailian-qwen-vl-plus",
+    "requested_model": "qwen3.5-plus",
+    "actual_model": "qwen3.5-plus",
     "fallback_hops": [],
     "used_fallback": false,
     "escalated": false
@@ -191,11 +191,11 @@ POST /evaluate
 @dataclass
 class AgentRoutingProfile:
     routing_enabled: bool = True
-    tier_low: str = "bailian-qwen-vl-turbo"
-    tier_mid: str = "bailian-qwen-vl-plus"
-    tier_high: str = "bailian-qwen-vl-max"
+    tier_low: str = "qwen3.5-flash"
+    tier_mid: str = "qwen3.5-plus"
+    tier_high: str = "qwen3.6-plus"
     min_tier: str = "low"          # 最低档位限制（如 audit 不能低于 mid）
-    default_model: str = "bailian-qwen-vl-plus"
+    default_model: str = "gpt-5.2"
     quality_escalate: bool = True  # 是否开启质量升档
 ```
 
@@ -203,9 +203,14 @@ class AgentRoutingProfile:
 
 ```python
 DEFAULT_FALLBACK_CHAINS = {
-    "openai-gpt-4o": ["bailian-qwen-vl-max", "bailian-qwen-vl-plus"],
-    "bailian-qwen-vl-max": ["bailian-qwen-vl-plus", "bailian-qwen-vl-turbo"],
-    "bailian-qwen-vl-plus": ["bailian-qwen-vl-turbo"],
+    "gpt-5.2": ["qwen3.6-plus", "qwen3.5-plus"],
+    "qwen3.6-flash": ["qwen3.5-flash"],
+    "qwen3.6-plus": ["qwen3.5-plus", "qwen3.5-flash"],
+    "qwen3.6-max": ["qwen3.6-plus", "qwen3.5-plus"],
+    "qwen3.5-flash": ["qwen-flash"],
+    "qwen3.5-plus": ["qwen3.5-flash"],
+    "qwen3-vl-flash": ["qwen3.5-flash"],
+    "qwen3-vl-plus": ["qwen3.5-plus"],
 }
 ```
 
@@ -271,11 +276,18 @@ gunicorn api.main:app -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 -w 2
 
 | 模型类型 | 说明 |
 |---|---|
-| `openai-gpt-4o` | OpenAI GPT-4o |
-| `openai-gpt-4o-mini` | OpenAI GPT-4o Mini |
-| `bailian-qwen-vl-max` | 阿里云百炼 Qwen-VL-Max |
-| `bailian-qwen-vl-plus` | 阿里云百炼 Qwen-VL-Plus |
-| `bailian-qwen-vl-turbo` | 阿里云百炼 Qwen-VL-Turbo |
+| `gpt-5.2` | OpenAI GPT-5.2 |
+| `qwen3.6-plus` | 阿里云百炼 Qwen3.6-Plus |
+| `qwen3.6-flash` | 阿里云百炼 Qwen3.6-Flash |
+| `qwen3.6-max` | 阿里云百炼 Qwen3.6-Max |
+| `qwen3.5-plus` | 阿里云百炼 Qwen3.5-Plus |
+| `qwen3.5-flash` | 阿里云百炼 Qwen3.5-Flash |
+| `qwen3-vl-plus` | 阿里云百炼 Qwen3-VL-Plus |
+| `qwen3-vl-flash` | 阿里云百炼 Qwen3-VL-Flash |
+| `qwen-vl-max` | 阿里云百炼 Qwen-VL-Max |
+| `qwen-vl-plus` | 阿里云百炼 Qwen-VL-Plus |
+| `qwen3-max` | 阿里云百炼 Qwen3-Max |
+| `qwen-flash` | 阿里云百炼 Qwen-Flash |
 
 ---
 

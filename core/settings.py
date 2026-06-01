@@ -13,11 +13,11 @@ class AgentRoutingProfile:
     """单个 agent 的 CV 分档与默认模型配置。"""
 
     routing_enabled: bool = True
-    tier_low: str = "bailian-qwen-vl-turbo"
-    tier_mid: str = "bailian-qwen-vl-plus"
-    tier_high: str = "bailian-qwen-vl-max"
+    tier_low: str = "qwen3.5-flash"
+    tier_mid: str = "qwen3.5-plus"
+    tier_high: str = "qwen3.6-plus"
     min_tier: TierName = "low"
-    default_model: str = "bailian-qwen-vl-plus"
+    default_model: str = "gpt-5.2"
     quality_escalate: bool = True
     max_cv_images: int = 12
 
@@ -26,16 +26,16 @@ class AgentRoutingProfile:
 DEFAULT_AGENT_PROFILES: dict[str, AgentRoutingProfile] = {
     "generic": AgentRoutingProfile(),
     "matting": AgentRoutingProfile(
-        tier_low="bailian-qwen-vl-turbo",
-        tier_mid="bailian-qwen-vl-plus",
-        tier_high="bailian-qwen-vl-max",
+        tier_low="qwen3.5-flash",
+        tier_mid="qwen3.5-plus",
+        tier_high="qwen3.6-plus",
         quality_escalate=True,
     ),
     "audit": AgentRoutingProfile(
         routing_enabled=True,
-        tier_low="bailian-qwen-vl-plus",      # audit 最低用 plus
-        tier_mid="bailian-qwen-vl-plus",
-        tier_high="bailian-qwen-vl-max",
+        tier_low="qwen3.6-plus",      # audit 最低用 mid
+        tier_mid="qwen3.6-plus",
+        tier_high="gpt-5.2",
         min_tier="mid",
         quality_escalate=True,
     ),
@@ -63,10 +63,14 @@ class RoutingConfig:
 
 # 默认降级链: model_id -> 按顺序尝试的 fallback 模型列表
 DEFAULT_FALLBACK_CHAINS: dict[str, list[str]] = {
-    "openai-gpt-4o": ["bailian-qwen-vl-max", "bailian-qwen-vl-plus"],
-    "bailian-qwen-vl-max": ["bailian-qwen-vl-plus", "bailian-qwen-vl-turbo"],
-    "bailian-qwen-vl-plus": ["bailian-qwen-vl-turbo"],
-    "openai-gpt-4o-mini": ["bailian-qwen-vl-turbo"],
+    "gpt-5.2": ["qwen3.6-plus", "qwen3.5-plus"],
+    "qwen3.6-flash": ["qwen3.5-flash"],
+    "qwen3.6-plus": ["qwen3.5-plus", "qwen3.5-flash"],
+    "qwen3.6-max": ["qwen3.6-plus", "qwen3.5-plus"],
+    "qwen3.5-flash": ["qwen-flash"],
+    "qwen3.5-plus": ["qwen3.5-flash"],
+    "qwen3-vl-flash": ["qwen3.5-flash"],
+    "qwen3-vl-plus": ["qwen3.5-plus"],
 }
 
 

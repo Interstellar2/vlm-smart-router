@@ -48,7 +48,7 @@ class MockChatModel:
             if not self._force_fail_for or self.model_name in self._force_fail_for:
                 self._raise_for_mode(self._force_fail, self.model_name)
 
-        if self._force_bad_json and self.model_name != "bailian-qwen-vl-max":
+        if self._force_bad_json and self.model_name != "qwen3.6-plus":
             return MockAIMessage('{"invalid_field": "bad"}')
 
         return MockAIMessage(
@@ -136,7 +136,7 @@ async def test_router_local_image():
     try:
         routing = await router.resolve("generic", [f"file://{path}"])
         assert routing.tier == "low"  # 简单图应该路由到 low
-        assert routing.model_type == "bailian-qwen-vl-turbo"
+        assert routing.model_type == "qwen3.5-flash"
     finally:
         os.unlink(path)
         await router.aclose()
@@ -156,7 +156,7 @@ async def test_router_complex_image():
     try:
         routing = await router.resolve("generic", [f"file://{path}"])
         assert routing.tier == "high"
-        assert routing.model_type == "bailian-qwen-vl-max"
+        assert routing.model_type == "qwen3.6-plus"
     finally:
         os.unlink(path)
         await router.aclose()
@@ -175,7 +175,7 @@ async def test_router_min_tier():
     try:
         routing = await router.resolve("audit", [f"file://{path}"])
         assert routing.tier == "mid"
-        assert routing.model_type == "bailian-qwen-vl-plus"
+        assert routing.model_type == "qwen3.6-plus"  # audit min_tier=mid, tier_low=tier_mid=qwen3.6-plus
     finally:
         os.unlink(path)
         await router.aclose()
@@ -186,36 +186,36 @@ async def test_router_min_tier():
 @pytest.mark.asyncio
 async def test_fallback_success(fake_factory):
     """正常调用不应触发 fallback。"""
-    session = FallbackSession(requested_model="bailian-qwen-vl-plus")
+    session = FallbackSession(requested_model="qwen3.5-plus")
     result = await session.ainvoke("hello")
-    assert result["model"] == "bailian-qwen-vl-plus"
+    assert result["model"] == "qwen3.5-plus"
     assert not session.fallback_hops
 
 
 @pytest.mark.asyncio
 async def test_fallback_timeout(fake_factory):
     """模拟超时，应降级到 fallback 链中的模型。"""
-    model = fake_factory.get_model("bailian-qwen-vl-plus")
-    model.set_force_fail("timeout", for_models={"bailian-qwen-vl-plus"})
+    model = fake_factory.get_model("qwen3.5-plus")
+    model.set_force_fail("timeout", for_models={"qwen3.5-plus"})
 
-    session = FallbackSession(requested_model="bailian-qwen-vl-plus")
+    session = FallbackSession(requested_model="qwen3.5-plus")
     result = await session.ainvoke("hello")
 
     assert bool(session.fallback_hops)
     assert len(session.fallback_hops) == 1
-    assert session.fallback_hops[0].from_model == "bailian-qwen-vl-plus"
-    assert session.fallback_hops[0].to_model == "bailian-qwen-vl-turbo"
-    assert result["model"] == "bailian-qwen-vl-turbo"
+    assert session.fallback_hops[0].from_model == "qwen3.5-plus"
+    assert session.fallback_hops[0].to_model == "qwen3.5-flash"
+    assert result["model"] == "qwen3.5-flash"
 
 
 @pytest.mark.asyncio
 async def test_fallback_chain_exhausted(fake_factory):
     """fallback 链耗尽后应抛异常。"""
-    model = fake_factory.get_model("bailian-qwen-vl-turbo")
+    model = fake_factory.get_model("qwen-flash")
     model.set_force_fail("timeout")
 
-    # bailian-qwen-vl-turbo 没有配置 fallback 链
-    session = FallbackSession(requested_model="bailian-qwen-vl-turbo")
+    # qwen-flash 没有配置 fallback 链（末端节点）
+    session = FallbackSession(requested_model="qwen-flash")
     with pytest.raises(Exception):
         await session.ainvoke("hello")
 
@@ -247,7 +247,7 @@ def test_classify_403_no_fallback():
 @pytest.mark.asyncio
 async def test_quality_escalate(fake_factory):
     """模拟 JSON 解析失败，触发质量升档。"""
-    model = fake_factory.get_model("bailian-qwen-vl-turbo")
+    model = fake_factory.get_model("qwen3.5-flash")
     model.set_force_bad_json(True)
 
     from services.routing import RoutingDecision
@@ -255,7 +255,7 @@ async def test_quality_escalate(fake_factory):
     router = VlmAgentRouter()
     routing = RoutingDecision(
         agent_id="generic",
-        model_type="bailian-qwen-vl-turbo",
+        model_type="qwen3.5-flash",
         tier="low",
         composite_score=0.2,
         shadow_mode=False,
@@ -267,15 +267,15 @@ async def test_quality_escalate(fake_factory):
         agent_id=routing.agent_id,
     )
 
-    # 模拟调用：turbo 返回 bad json，触发 escalate 到 plus，plus 也返回 bad json，escalate 到 max，max 返回正确结果
+    # 模拟调用：flash 返回 bad json，触发 escalate 到 plus，plus 也返回 bad json，escalate 到 max，max 返回正确结果
     # 这里我们手动测试 escalate_model
-    next_model = router.escalate_model("generic", "bailian-qwen-vl-turbo")
-    assert next_model == "bailian-qwen-vl-plus"
+    next_model = router.escalate_model("generic", "qwen3.5-flash")
+    assert next_model == "qwen3.5-plus"
 
-    next_model2 = router.escalate_model("generic", "bailian-qwen-vl-plus")
-    assert next_model2 == "bailian-qwen-vl-max"
+    next_model2 = router.escalate_model("generic", "qwen3.5-plus")
+    assert next_model2 == "qwen3.6-plus"
 
-    next_model3 = router.escalate_model("generic", "bailian-qwen-vl-max")
+    next_model3 = router.escalate_model("generic", "qwen3.6-plus")
     assert next_model3 is None  # 已经到顶
 
     await router.aclose()

@@ -14,11 +14,11 @@ class MockLLMProvider:
     def __init__(self) -> None:
         # 每个模型的模拟延迟 (秒)
         self._latencies: dict[str, float] = {
-            "qwen-vl-flash": 0.3,
-            "qwen-vl-flash-lite": 0.2,
-            "qwen-vl-plus": 0.6,
-            "qwen-vl-max": 1.0,
-            "gpt-4o": 0.8,
+            "qwen3.5-flash": 0.2,
+            "qwen3.5-plus": 0.4,
+            "qwen3.6-plus": 0.6,
+            "qwen3.6-max": 1.0,
+            "gpt-5.2": 0.8,
         }
         # 全局注入的故障（由请求参数设置）
         self._force_fail: str = ""
@@ -43,7 +43,7 @@ class MockLLMProvider:
                 self._raise_for_mode(self._force_fail, model)
 
         # 模拟返回结果
-        if self._force_bad_json and model != "qwen-vl-max":
+        if self._force_bad_json and model != "qwen3.6-max":
             # 非最强模型模拟返回错误 JSON，触发 quality escalate
             return {"invalid_field": "bad"}
 

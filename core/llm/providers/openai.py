@@ -1,5 +1,5 @@
 """
-OpenAI Provider：gpt-4o、gpt-4o-mini 实例
+OpenAI Provider：gpt-5.2 实例
 """
 
 from langchain_openai import ChatOpenAI
@@ -16,15 +16,8 @@ _OPENAI_BASE_URL = _openai_cfg.get("base_url", "https://api.openai.com/v1")
 
 
 PROVIDERS: dict[ModelType, ChatOpenAI] = {
-    ModelType.OPENAI_GPT_4O: ChatOpenAI(
-        model="gpt-4o",
-        api_key=_OPENAI_API_KEY or "EMPTY",
-        base_url=_OPENAI_BASE_URL,
-        temperature=0.2,
-        max_retries=1,
-    ),
-    ModelType.OPENAI_GPT_4O_MINI: ChatOpenAI(
-        model="gpt-4o-mini",
+    ModelType.GPT5_2: ChatOpenAI(
+        model="gpt-5.2",
         api_key=_OPENAI_API_KEY or "EMPTY",
         base_url=_OPENAI_BASE_URL,
         temperature=0.2,

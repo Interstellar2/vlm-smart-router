@@ -8,9 +8,20 @@ from enum import Enum
 class ModelType(str, Enum):
     """支持的 VLM 模型类型。"""
 
-    OPENAI_GPT_4O = "openai-gpt-4o"
-    OPENAI_GPT_4O_MINI = "openai-gpt-4o-mini"
+    GPT5_2 = "gpt-5.2"
 
-    BAILIAN_QWEN_VL_MAX = "bailian-qwen-vl-max"
-    BAILIAN_QWEN_VL_PLUS = "bailian-qwen-vl-plus"
-    BAILIAN_QWEN_VL_TURBO = "bailian-qwen-vl-turbo"
+    QWEN3_6_PLUS = "qwen3.6-plus"
+    QWEN3_6_FLASH = "qwen3.6-flash"
+    QWEN3_6_MAX = "qwen3.6-max"
+
+    QWEN3_5_PLUS = "qwen3.5-plus"
+    QWEN3_5_FLASH = "qwen3.5-flash"
+
+    QWEN3_MAX = "qwen3-max"
+    QWEN_FLASH = "qwen-flash"
+
+    QWEN3_VL_PLUS = "qwen3-vl-plus"
+    QWEN3_VL_FLASH = "qwen3-vl-flash"
+
+    QWEN_VL_MAX = "qwen-vl-max"
+    QWEN_VL_PLUS = "qwen-vl-plus"

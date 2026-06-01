@@ -1,5 +1,5 @@
 """
-百炼 Provider：qwen-vl-max、qwen-vl-plus、qwen-vl-turbo 实例
+百炼 Provider：qwen3.x / qwen-vl 系列实例
 """
 
 from langchain_core.rate_limiters import InMemoryRateLimiter
@@ -25,21 +25,63 @@ _BAILIAN_COMMON_KWARGS = {
     "temperature": 0.2,
     "max_retries": 3,
     "rate_limiter": _bailian_rate_limiter,
-    "extra_body": {"enable_thinking": False},
 }
 
 
+def _with_thinking():
+    return {"model_kwargs": {"extra_body": {"enable_thinking": False}}}
+
+
 PROVIDERS: dict[ModelType, ChatOpenAI] = {
-    ModelType.BAILIAN_QWEN_VL_MAX: ChatOpenAI(
+    ModelType.QWEN3_6_PLUS: ChatOpenAI(
+        model="qwen3.6-plus",
+        **_BAILIAN_COMMON_KWARGS,
+        **_with_thinking(),
+    ),
+    ModelType.QWEN3_6_FLASH: ChatOpenAI(
+        model="qwen3.6-flash",
+        **_BAILIAN_COMMON_KWARGS,
+        **_with_thinking(),
+    ),
+    ModelType.QWEN3_6_MAX: ChatOpenAI(
+        model="qwen3.6-max",
+        **_BAILIAN_COMMON_KWARGS,
+        **_with_thinking(),
+    ),
+    ModelType.QWEN3_5_PLUS: ChatOpenAI(
+        model="qwen3.5-plus",
+        **_BAILIAN_COMMON_KWARGS,
+        **_with_thinking(),
+    ),
+    ModelType.QWEN3_5_FLASH: ChatOpenAI(
+        model="qwen3.5-flash",
+        **_BAILIAN_COMMON_KWARGS,
+        **_with_thinking(),
+    ),
+    ModelType.QWEN3_MAX: ChatOpenAI(
+        model="qwen3-max",
+        **_BAILIAN_COMMON_KWARGS,
+        max_tokens=4096,
+    ),
+    ModelType.QWEN_FLASH: ChatOpenAI(
+        model="qwen-flash",
+        **_BAILIAN_COMMON_KWARGS,
+    ),
+    ModelType.QWEN3_VL_PLUS: ChatOpenAI(
+        model="qwen3-vl-plus",
+        **_BAILIAN_COMMON_KWARGS,
+    ),
+    ModelType.QWEN3_VL_FLASH: ChatOpenAI(
+        model="qwen3-vl-flash",
+        **_BAILIAN_COMMON_KWARGS,
+        **_with_thinking(),
+    ),
+    ModelType.QWEN_VL_MAX: ChatOpenAI(
         model="qwen-vl-max",
         **_BAILIAN_COMMON_KWARGS,
     ),
-    ModelType.BAILIAN_QWEN_VL_PLUS: ChatOpenAI(
+    ModelType.QWEN_VL_PLUS: ChatOpenAI(
         model="qwen-vl-plus",
-        **_BAILIAN_COMMON_KWARGS,
-    ),
-    ModelType.BAILIAN_QWEN_VL_TURBO: ChatOpenAI(
-        model="qwen-vl-turbo",
         **_BAILIAN_COMMON_KWARGS,
     ),
 }
