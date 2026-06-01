@@ -161,7 +161,9 @@ class VlmAgentRouter:
                         bgr = cv2.imdecode(arr, cv2.IMREAD_COLOR)
                     if bgr is None:
                         raise ValueError(f"无法读取图片: {url}")
-                    profile = analyze_bgr_complexity(bgr, max_side=max_side, role=role)
+                    profile = await asyncio.to_thread(
+                        analyze_bgr_complexity, bgr, max_side=max_side, role=role
+                    )
                     return name, profile
                 except Exception as e:
                     logger.warning("分析图片失败 %s: %s", url, e)

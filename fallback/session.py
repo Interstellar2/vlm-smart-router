@@ -43,6 +43,7 @@ class FallbackSession:
     requested_model: str
     agent_id: str = "unknown"
     active_model: str | None = None
+    bind_json: bool = True
     fallback_hops: list[FallbackHop] = field(default_factory=list)
     _chain_index: dict[str, int] = field(default_factory=dict)
     _lock: asyncio.Lock = field(default_factory=asyncio.Lock)
@@ -50,6 +51,13 @@ class FallbackSession:
     def __post_init__(self) -> None:
         if self.active_model is None:
             self.active_model = self.requested_model
+
+    def _bound_llm(self):
+        """获取绑定 response_format 的模型实例（强制 JSON 输出）。"""
+        model = llm_factory.get_model(self.active_model)
+        if self.bind_json and hasattr(model, "bind"):
+            return model.bind(response_format={"type": "json_object"})
+        return model
 
     async def ainvoke(
         self,
@@ -69,10 +77,10 @@ class FallbackSession:
 
             while True:
                 try:
-                    model = llm_factory.get_model(self.active_model)
+                    llm = self._bound_llm()
                     messages = [_build_human_message(prompt, image_urls)]
-                    response = await model.ainvoke(messages)
-                    return _parse_response(response)
+                    response = await llm.ainvoke(messages)
+                    return _parse_response(response, strict=self.bind_json)
                 except Exception as e:
                     # parse_error 直接抛出，不走 fallback，由外层 quality_escalate 捕获
                     if isinstance(e, (ValueError, json.JSONDecodeError, TypeError)):
@@ -105,10 +113,10 @@ class FallbackSession:
 
             while True:
                 try:
-                    model = llm_factory.get_model(self.active_model)
+                    llm = self._bound_llm()
                     messages = [_build_human_message(prompt, image_urls)]
-                    response = await model.ainvoke(messages)
-                    parsed = _parse_response(response)
+                    response = await llm.ainvoke(messages)
+                    parsed = _parse_response(response, strict=self.bind_json)
                     validated = schema(**parsed)
                     return validated
                 except Exception as e:
@@ -169,8 +177,8 @@ def _build_human_message(prompt: str, image_urls: list[str] | None = None) -> Hu
     return HumanMessage(content=content)
 
 
-def _parse_response(response: Any) -> dict[str, Any]:
-    """将模型响应解析为 dict；content 为字符串时尝试 JSON，否则包装为 raw。"""
+def _parse_response(response: Any, strict: bool = False) -> dict[str, Any]:
+    """将模型响应解析为 dict；strict=True 时解析失败直接抛出 JSONDecodeError。"""
     if isinstance(response, dict):
         return response
     content = getattr(response, "content", response)
@@ -178,11 +186,17 @@ def _parse_response(response: Any) -> dict[str, Any]:
         try:
             return json.loads(content)
         except json.JSONDecodeError:
+            if strict:
+                raise
             return {"raw": content}
     if isinstance(content, list) and content:
         text = content[0] if isinstance(content[0], str) else str(content[0])
         try:
             return json.loads(text)
         except json.JSONDecodeError:
+            if strict:
+                raise
             return {"raw": text}
+    if strict:
+        raise json.JSONDecodeError("无法解析模型响应为 JSON", str(response), 0)
     return {"raw": str(response)}
